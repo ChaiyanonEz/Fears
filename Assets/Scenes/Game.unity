@@ -22404,6 +22404,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1934804509}
     - target: {fileID: 8315913573325974030, guid: 3a788f0486bb6ed4b9bf37e6eed05862, type: 3}
+      propertyPath: dropScale
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8315913573325974030, guid: 3a788f0486bb6ed4b9bf37e6eed05862, type: 3}
       propertyPath: attackSound
       value: 
       objectReference: {fileID: 8300000, guid: e46b9239828a5ad4cb098c4d841cee70, type: 3}
@@ -22419,6 +22423,18 @@ PrefabInstance:
       propertyPath: playerHealth
       value: 
       objectReference: {fileID: 1934804510}
+    - target: {fileID: 8315913573325974030, guid: 3a788f0486bb6ed4b9bf37e6eed05862, type: 3}
+      propertyPath: waterColor.b
+      value: 0.025458813
+      objectReference: {fileID: 0}
+    - target: {fileID: 8315913573325974030, guid: 3a788f0486bb6ed4b9bf37e6eed05862, type: 3}
+      propertyPath: waterColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8315913573325974030, guid: 3a788f0486bb6ed4b9bf37e6eed05862, type: 3}
+      propertyPath: waterColor.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8315913573325974030, guid: 3a788f0486bb6ed4b9bf37e6eed05862, type: 3}
       propertyPath: detectionRadius
       value: 10
@@ -25369,6 +25385,10 @@ PrefabInstance:
       propertyPath: playerHealth
       value: 
       objectReference: {fileID: 1934804510}
+    - target: {fileID: 1574433255554407737, guid: ba61b889b517d9246b661dd6d941ff26, type: 3}
+      propertyPath: detectionRadius
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 1764938099803105181, guid: ba61b889b517d9246b661dd6d941ff26, type: 3}
       propertyPath: m_Layer
       value: 7
@@ -64210,7 +64230,7 @@ MonoBehaviour:
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []
-  m_SelectedVertices: 86020000
+  m_SelectedVertices: 
 --- !u!4 &1105241978
 Transform:
   m_ObjectHideFlags: 0
