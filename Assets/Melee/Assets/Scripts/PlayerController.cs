@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,7 +7,6 @@ public class PlayerController : MonoBehaviour
 {
     PlayerInput playerInput;
     PlayerInput.MainActions input;
-
     CharacterController controller;
     Animator animator;
     AudioSource audioSource;
@@ -16,27 +15,27 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 5;
     public float gravity = -9.8f;
     public float jumpHeight = 1.2f;
-
     Vector3 _PlayerVelocity;
-
     bool isGrounded;
 
     [Header("Camera")]
     public Camera cam;
     public float sensitivity;
-
     float xRotation = 0f;
 
+    [Header("Footsteps Settings")]
+    public AudioClip footstepSound;    // ลากไฟล์เสียงเดินใส่ตรงนี้
+    public float footstepInterval = 0.5f; // ความเร็วของเสียง (เลขน้อยเสียงรัว เลขมากเสียงช้า)
+    float footstepTimer;
+
     void Awake()
-    { 
+    {
         controller = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
         audioSource = GetComponent<AudioSource>();
-
         playerInput = new PlayerInput();
         input = playerInput.Main;
         AssignInputs();
-
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -45,29 +44,34 @@ public class PlayerController : MonoBehaviour
     {
         isGrounded = controller.isGrounded;
 
-        // Repeat Inputs
-        if(input.Attack.IsPressed())
-        { Attack(); }
+        if (input.Attack.IsPressed())
+        {
+            Attack();
+        }
 
         SetAnimations();
+        HandleFootsteps(); // เรียกใช้งานระบบเสียงเดิน
     }
 
-    void FixedUpdate() 
-    { MoveInput(input.Movement.ReadValue<Vector2>()); }
+    void FixedUpdate()
+    {
+        MoveInput(input.Movement.ReadValue<Vector2>());
+    }
 
-    void LateUpdate() 
-    { LookInput(input.Look.ReadValue<Vector2>()); }
+    void LateUpdate()
+    {
+        LookInput(input.Look.ReadValue<Vector2>());
+    }
 
     void MoveInput(Vector2 input)
     {
         Vector3 moveDirection = Vector3.zero;
         moveDirection.x = input.x;
         moveDirection.z = input.y;
-
         controller.Move(transform.TransformDirection(moveDirection) * moveSpeed * Time.deltaTime);
+
         _PlayerVelocity.y += gravity * Time.deltaTime;
-        if(isGrounded && _PlayerVelocity.y < 0)
-            _PlayerVelocity.y = -2f;
+        if (isGrounded && _PlayerVelocity.y < 0) _PlayerVelocity.y = -2f;
         controller.Move(_PlayerVelocity * Time.deltaTime);
     }
 
@@ -75,26 +79,25 @@ public class PlayerController : MonoBehaviour
     {
         float mouseX = input.x;
         float mouseY = input.y;
-
         xRotation -= (mouseY * Time.deltaTime * sensitivity);
         xRotation = Mathf.Clamp(xRotation, -80, 80);
-
         cam.transform.localRotation = Quaternion.Euler(xRotation, 0, 0);
-
         transform.Rotate(Vector3.up * (mouseX * Time.deltaTime * sensitivity));
     }
 
-    void OnEnable() 
-    { input.Enable(); }
+    void OnEnable()
+    {
+        input.Enable();
+    }
 
     void OnDisable()
-    { input.Disable(); }
+    {
+        input.Disable();
+    }
 
     void Jump()
     {
-        // Adds force to the player rigidbody to jump
-        if (isGrounded)
-            _PlayerVelocity.y = Mathf.Sqrt(jumpHeight * -3.0f * gravity);
+        if (isGrounded) _PlayerVelocity.y = Mathf.Sqrt(jumpHeight * -3.0f * gravity);
     }
 
     void AssignInputs()
@@ -106,69 +109,86 @@ public class PlayerController : MonoBehaviour
     // ---------- //
     // ANIMATIONS //
     // ---------- //
-
     public const string IDLE = "Idle";
     public const string WALK = "Walk";
     public const string ATTACK1 = "Attack 1";
     public const string ATTACK2 = "Attack 2";
-
     string currentAnimationState;
 
-    public void ChangeAnimationState(string newState) 
+    public void ChangeAnimationState(string newState)
     {
-        // STOP THE SAME ANIMATION FROM INTERRUPTING WITH ITSELF //
         if (currentAnimationState == newState) return;
-
-        // PLAY THE ANIMATION //
         currentAnimationState = newState;
         animator.CrossFadeInFixedTime(currentAnimationState, 0.2f);
     }
 
     void SetAnimations()
     {
-        // If player is not attacking
-        if(!attacking)
+        if (!attacking)
         {
-            if(_PlayerVelocity.x == 0 &&_PlayerVelocity.z == 0)
-            { ChangeAnimationState(IDLE); }
+            // ตรวจสอบความเร็วจากค่า Input แทนเพื่อความแม่นยำ
+            if (input.Movement.ReadValue<Vector2>().magnitude == 0)
+            {
+                ChangeAnimationState(IDLE);
+            }
             else
-            { ChangeAnimationState(WALK); }
+            {
+                ChangeAnimationState(WALK);
+            }
+        }
+    }
+
+    // ------------------- //
+    // FOOTSTEPS LOGIC     //
+    // ------------------- //
+    void HandleFootsteps()
+    {
+        // เงื่อนไข: อยู่บนพื้น และ กำลังกดปุ่มเดิน
+        if (isGrounded && input.Movement.ReadValue<Vector2>().magnitude > 0.1f)
+        {
+            footstepTimer -= Time.deltaTime;
+
+            if (footstepTimer <= 0)
+            {
+                // สุ่มเสียงทุ้มแหลมเล็กน้อยเพื่อให้เสียงดูเป็นธรรมชาติ
+                audioSource.pitch = Random.Range(0.8f, 1.2f);
+                audioSource.PlayOneShot(footstepSound);
+                footstepTimer = footstepInterval; // รีเซ็ตตัวนับเวลา
+            }
+        }
+        else
+        {
+            footstepTimer = 0; // ถ้าหยุดเดิน ให้รีเซ็ตเวลา
         }
     }
 
     // ------------------- //
     // ATTACKING BEHAVIOUR //
     // ------------------- //
-
     [Header("Attacking")]
     public float attackDistance = 3f;
     public float attackDelay = 0.4f;
     public float attackSpeed = 1f;
     public int attackDamage = 1;
     public LayerMask attackLayer;
-
     public GameObject hitEffect;
     public AudioClip swordSwing;
     public AudioClip hitSound;
-
     bool attacking = false;
     bool readyToAttack = true;
     int attackCount;
 
     public void Attack()
     {
-        if(!readyToAttack || attacking) return;
-
+        if (!readyToAttack || attacking) return;
         readyToAttack = false;
         attacking = true;
-
         Invoke(nameof(ResetAttack), attackSpeed);
         Invoke(nameof(AttackRaycast), attackDelay);
-
         audioSource.pitch = Random.Range(0.9f, 1.1f);
         audioSource.PlayOneShot(swordSwing);
 
-        if(attackCount == 0)
+        if (attackCount == 0)
         {
             ChangeAnimationState(ATTACK1);
             attackCount++;
@@ -188,20 +208,20 @@ public class PlayerController : MonoBehaviour
 
     void AttackRaycast()
     {
-        if(Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit hit, attackDistance, attackLayer))
-        { 
+        if (Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit hit, attackDistance, attackLayer))
+        {
             HitTarget(hit.point);
-
-            if(hit.transform.TryGetComponent<Actor>(out Actor T))
-            { T.TakeDamage(attackDamage); }
-        } 
+            if (hit.transform.TryGetComponent<Actor>(out Actor T))
+            {
+                T.TakeDamage(attackDamage);
+            }
+        }
     }
 
     void HitTarget(Vector3 pos)
     {
         audioSource.pitch = 1;
         audioSource.PlayOneShot(hitSound);
-
         GameObject GO = Instantiate(hitEffect, pos, Quaternion.identity);
         Destroy(GO, 20);
     }
